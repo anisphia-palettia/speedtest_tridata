@@ -4,29 +4,19 @@ function ema(prev: number, next: number, alpha = 0.2) {
   return prev === 0 ? next : prev * (1 - alpha) + next * alpha;
 }
 
-// ── Ping: HEAD request ke /downloading ──────────────────────────────────────
+// ── Ping: measured server-side via Node.js http (more accurate than browser fetch) ──
 export async function measurePing(
   onProgress: (ms: number) => void,
   signal: AbortSignal
 ): Promise<number> {
-  const samples: number[] = [];
-
-  for (let i = 0; i < 10; i++) {
-    if (signal.aborted) break;
-    try {
-      const t0 = performance.now();
-      await fetch(`${DOWNLOAD_URL}?n=${Math.random()}`, {
-        method: "HEAD",
-        cache: "no-store",
-        signal: AbortSignal.timeout(3000),
-      });
-      samples.push(performance.now() - t0);
-      onProgress(Math.min(...samples));
-    } catch { /* skip */ }
-    if (i < 9) await new Promise((r) => setTimeout(r, 100));
+  try {
+    const res = await fetch("/api/ping", { cache: "no-store", signal });
+    const { ms } = await res.json() as { ms: number };
+    onProgress(ms);
+    return ms;
+  } catch {
+    return 999;
   }
-
-  return samples.length > 0 ? Math.min(...samples) : 999;
 }
 
 // ── Download worker: loop terus hingga signal dibatalkan ──────────────────────
