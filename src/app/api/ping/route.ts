@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import http from "http";
 import https from "https";
 
-const TARGET  = process.env.NEXT_PUBLIC_SPEEDTEST_SERVER ?? "http://203.175.124.246:3000";
+const TARGET  = process.env.NEXT_PUBLIC_SPEEDTEST_SERVER ?? "";
 const SAMPLES = Number(process.env.PING_SAMPLES ?? 10);
 
 function probe(): Promise<number> {

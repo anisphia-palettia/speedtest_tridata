@@ -1,4 +1,4 @@
-export const SERVER           = process.env.NEXT_PUBLIC_SPEEDTEST_SERVER ?? "http://203.175.124.246:3000";
+export const SERVER           = process.env.NEXT_PUBLIC_SPEEDTEST_SERVER ?? "";
 export const DOWNLOAD_URL     = `${SERVER}/downloading`;
 export const UPLOAD_URL       = `${SERVER}/upload`;
 export const TEST_DURATION_MS = Number(process.env.NEXT_PUBLIC_TEST_DURATION_MS ?? 15_000);
