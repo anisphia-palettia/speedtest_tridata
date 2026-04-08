@@ -1,4 +1,7 @@
-import { DOWNLOAD_URL, UPLOAD_URL, TEST_DURATION_MS, PARALLEL } from "./constants";
+import { TEST_DURATION_MS, PARALLEL } from "./constants";
+
+const DOWNLOAD_URL = "/api/download";
+const UPLOAD_URL   = "/api/upload";
 
 function ema(prev: number, next: number, alpha = 0.2) {
   return prev === 0 ? next : prev * (1 - alpha) + next * alpha;
