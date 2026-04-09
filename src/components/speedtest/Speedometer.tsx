@@ -66,7 +66,7 @@ export default function Speedometer({ value, phase = "idle" }: Props) {
   }, [value]);
 
   return (
-    <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} overflow="hidden">
+    <svg width="100%" viewBox={`0 0 ${W} ${H}`} overflow="hidden" style={{ display: "block" }}>
       <defs>
         <linearGradient id="gradDl" gradientUnits="userSpaceOnUse"
           x1={toXY(R, START).x}         y1={toXY(R, START).y}

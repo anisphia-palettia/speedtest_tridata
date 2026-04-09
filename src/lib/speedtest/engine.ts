@@ -1,5 +1,16 @@
 import { SERVER, PING_PATH, DOWNLOAD_URL, UPLOAD_URL, TEST_DURATION_MS, PARALLEL } from "./constants";
 
+// ── Public IP: browser equivalent of `curl ip.me` ────────────────────────────
+export async function fetchPublicIp(): Promise<string> {
+  try {
+    const res = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+    const { ip } = await res.json() as { ip: string };
+    return ip;
+  } catch {
+    return "—";
+  }
+}
+
 function ema(prev: number, next: number, alpha = 0.2) {
   return prev === 0 ? next : prev * (1 - alpha) + next * alpha;
 }

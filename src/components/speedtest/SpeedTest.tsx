@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge }  from "@/components/ui/badge";
 import { Card }   from "@/components/ui/card";
 
-import { measurePing, measureDownload, measureUpload } from "@/lib/speedtest/engine";
+import { measurePing, measureDownload, measureUpload, fetchPublicIp } from "@/lib/speedtest/engine";
 import { TEST_DURATION_MS }                             from "@/lib/speedtest/constants";
 import type { Phase, TestResult }                      from "@/lib/speedtest/types";
 import { cn }                                          from "@/lib/utils";
@@ -27,7 +27,6 @@ function usePhaseTimer(phase: Phase): number {
   useEffect(() => {
     if (phase !== "download" && phase !== "upload") return;
     startRef.current = performance.now();
-    setElapsed(0);
     const id = setInterval(() => {
       setElapsed(Math.min((performance.now() - startRef.current) / TEST_DURATION_MS, 1));
     }, 80);
@@ -97,12 +96,17 @@ function PhaseBar({ phase }: { phase: Phase }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function SpeedTest() {
-  const [phase,  setPhase]  = useState<Phase>("idle");
-  const [speed,  setSpeed]  = useState(0);
-  const [pingMs, setPingMs] = useState(0);
-  const [result, setResult] = useState<TestResult | null>(null);
-  const [error,  setError]  = useState<string | null>(null);
-  const abortRef            = useRef<AbortController | null>(null);
+  const [phase,    setPhase]    = useState<Phase>("idle");
+  const [speed,    setSpeed]    = useState(0);
+  const [pingMs,   setPingMs]   = useState(0);
+  const [result,   setResult]   = useState<TestResult | null>(null);
+  const [error,    setError]    = useState<string | null>(null);
+  const [publicIp, setPublicIp] = useState<string | null>(null);
+  const abortRef                = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    fetchPublicIp().then(setPublicIp);
+  }, []);
 
   const isTesting = phase === "download" || phase === "upload";
   const isRunning = phase === "ping" || isTesting;
@@ -157,7 +161,7 @@ export default function SpeedTest() {
   const showPhaseBar = isRunning || phase === "done";
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10 select-none overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-6 sm:py-10 select-none overflow-hidden">
 
       {/* Background glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
@@ -171,23 +175,26 @@ export default function SpeedTest() {
       </div>
 
       {/* Top bar */}
-      <header className="w-full max-w-md flex items-center justify-between mb-8">
+      <header className="w-full max-w-md flex items-center justify-between mb-6 sm:mb-8">
         <div>
           <h1 className="text-xl font-bold tracking-tight">SpeedTest</h1>
           <p className="text-[11px] font-mono text-muted-foreground">Tridata</p>
+          <p className="text-[11px] font-mono text-muted-foreground/70 mt-0.5 tabular-nums">
+            {publicIp ?? "···"}
+          </p>
         </div>
         <ThemeToggle />
       </header>
 
       {/* Error */}
       {error && (
-        <Card className="mb-4 max-w-sm border-destructive/40 bg-destructive/10 px-5 py-3 text-sm text-destructive text-center">
+        <Card className="mb-4 w-full max-w-sm border-destructive/40 bg-destructive/10 px-5 py-3 text-sm text-destructive text-center">
           {error}
         </Card>
       )}
 
       {/* Phase indicator */}
-      <div className="mb-4 h-8 flex items-center">
+      <div className="mb-3 sm:mb-4 h-8 flex items-center">
         {showPhaseBar
           ? <PhaseBar phase={phase} />
           : <span className="text-sm text-muted-foreground">Ready to test</span>
@@ -195,7 +202,9 @@ export default function SpeedTest() {
       </div>
 
       {/* Speedometer */}
-      <Speedometer value={speed} phase={phase} />
+      <div className="w-full max-w-[340px] sm:max-w-[420px] mx-auto">
+        <Speedometer value={speed} phase={phase} />
+      </div>
 
       {/* Linear progress bar — shown during download and upload */}
       <div className="w-full max-w-xs mt-1 mb-1 h-[3px] bg-muted rounded-full overflow-hidden">
@@ -212,7 +221,7 @@ export default function SpeedTest() {
       </div>
 
       {/* Timer badge */}
-      <div className="mb-5 h-7 flex items-center justify-center">
+      <div className="mb-4 sm:mb-5 h-7 flex items-center justify-center">
         {isTesting && (
           <Badge variant="secondary" className="font-mono text-xs tabular-nums px-3 py-1">
             {remainSec}s remaining
@@ -236,7 +245,7 @@ export default function SpeedTest() {
       )}
 
       {/* Buttons */}
-      <div className="mt-6 flex gap-3">
+      <div className="mt-5 sm:mt-6 flex gap-3">
         {isRunning ? (
           <Button variant="outline" onClick={cancel} className="rounded-full px-8">
             Cancel
