@@ -1,22 +1,34 @@
-import { DOWNLOAD_URL, UPLOAD_URL, TEST_DURATION_MS, PARALLEL } from "./constants";
+import { SERVER, PING_PATH, DOWNLOAD_URL, UPLOAD_URL, TEST_DURATION_MS, PARALLEL } from "./constants";
 
 function ema(prev: number, next: number, alpha = 0.2) {
   return prev === 0 ? next : prev * (1 - alpha) + next * alpha;
 }
 
-// ── Ping: measured server-side via Node.js http (more accurate than browser fetch) ──
+// ── Ping: measured client-side (browser → speedtest server) ──────────────────
+const PING_SAMPLES = 10;
+
 export async function measurePing(
   onProgress: (ms: number) => void,
   signal: AbortSignal
 ): Promise<number> {
-  try {
-    const res = await fetch("/api/ping", { cache: "no-store", signal });
-    const { ms } = await res.json() as { ms: number };
-    onProgress(ms);
-    return ms;
-  } catch {
-    return 999;
+  const results: number[] = [];
+
+  for (let i = 0; i < PING_SAMPLES; i++) {
+    if (signal.aborted) break;
+    try {
+      const url = `${SERVER}${PING_PATH}?r=${Math.random()}`;
+      const start = performance.now();
+      await fetch(url, { cache: "no-store", signal, mode: "no-cors" });
+      results.push(performance.now() - start);
+    } catch {
+      if (signal.aborted) break;
+    }
+    if (i < PING_SAMPLES - 1) await new Promise((r) => setTimeout(r, 100));
   }
+
+  const ms = results.length > 0 ? Math.min(...results) : 999;
+  onProgress(ms);
+  return ms;
 }
 
 // ── Download worker: loop terus hingga signal dibatalkan ──────────────────────
