@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
-import http from "http";
 import https from "https";
+import http from "http";
 
-const TARGET  = process.env.NEXT_PUBLIC_SPEEDTEST_SERVER ?? "";
-const SAMPLES = Number(process.env.PING_SAMPLES ?? 10);
+// LibreSpeed ping endpoint: GET /empty.php
+const SERVER  = process.env.NEXT_PUBLIC_SPEEDTEST_SERVER ?? "";
+const SAMPLES = 10;
 
 function probe(): Promise<number> {
   return new Promise((resolve) => {
-    const url = new URL(`${TARGET}/downloading?n=${Math.random()}`);
+    const url  = new URL(`${SERVER}/backend/empty.php?r=${Math.random()}`);
     const mod  = url.protocol === "https:" ? https : http;
     const start = performance.now();
 
@@ -16,7 +17,7 @@ function probe(): Promise<number> {
         hostname: url.hostname,
         port:     Number(url.port) || (url.protocol === "https:" ? 443 : 80),
         path:     url.pathname + url.search,
-        method:   "HEAD",
+        method:   "GET",
       },
       (res) => {
         res.resume();

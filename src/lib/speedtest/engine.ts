@@ -20,22 +20,23 @@ export async function measurePing(
 }
 
 // ── Download worker: loop terus hingga signal dibatalkan ──────────────────────
+// LibreSpeed: GET /garbage.php?ckSize=100 returns 100 MB random data
 async function downloadWorker(idx: number, bytes: number[], signal: AbortSignal) {
   while (!signal.aborted) {
     try {
-      const res = await fetch(`${DOWNLOAD_URL}?n=${Math.random()}`, {
+      const res = await fetch(`${DOWNLOAD_URL}?ckSize=100&r=${Math.random()}`, {
         cache: "no-store",
         signal,
       });
       const reader = res.body!.getReader();
       while (!signal.aborted) {
         const { done, value } = await reader.read();
-        if (done) break; // file habis → mulai request baru
+        if (done) break;
         bytes[idx] += value.length;
       }
     } catch {
       if (signal.aborted) return;
-      await new Promise((r) => setTimeout(r, 50)); // singkat retry
+      await new Promise((r) => setTimeout(r, 50));
     }
   }
 }
@@ -77,6 +78,7 @@ export async function measureDownload(
 }
 
 // ── Upload worker: loop terus hingga signal dibatalkan ────────────────────────
+// LibreSpeed: POST /empty.php with binary body
 function uploadWorker(
   idx: number,
   sent: number[],
@@ -93,12 +95,12 @@ function uploadWorker(
 
       const xhr = new XMLHttpRequest();
       xhr.upload.onprogress = (e) => { sent[idx] += e.loaded - (sent[idx] % CHUNK || 0); };
-      xhr.onload = () => { sendChunk(); }; // mulai chunk berikutnya
+      xhr.onload  = () => { sendChunk(); };
       xhr.onerror = () => { if (!signal.aborted) sendChunk(); };
       xhr.ontimeout = () => { if (!signal.aborted) sendChunk(); };
       signal.addEventListener("abort", () => { xhr.abort(); resolve(); }, { once: true });
 
-      xhr.open("POST", `${UPLOAD_URL}?n=${Math.random()}`);
+      xhr.open("POST", `${UPLOAD_URL}?r=${Math.random()}`);
       xhr.timeout = TEST_DURATION_MS + 5000;
       xhr.send(data.buffer);
     }
